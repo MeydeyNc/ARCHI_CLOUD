@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mini site API Demo</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f9fafb;
+      color: #333;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+    }
+    h1 {
+      color: #0078d7;
+    }
+    button {
+      background-color: #0078d7;
+      color: white;
+      border: none;
+      padding: 10px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 1rem;
+      margin-top: 12px;
+    }
+    button:hover {
+      background-color: #005fa3;
+    }
+    #response {
+      margin-top: 20px;
+      background-color: #fff;
+      border: 1px solid #ddd;
+      padding: 10px;
+      border-radius: 6px;
+      width: 80%;
+      max-width: 500px;
+      word-wrap: break-word;
+    }
+  </style>
+</head>
+<body>
+  <h1>🌐 API OUI OUI BAGUETTE</h1>
+  <p>Clique sur le bouton pour appeler ton API :</p>
+  <button id="callApiBtn">Appeler l'API</button>
+
+  <div id="response">Aucune réponse pour l’instant...</div>
+
+  <script src="script.js"></script>
+</body>
+</html>
