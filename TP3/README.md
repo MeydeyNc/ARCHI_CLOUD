@@ -1,11 +1,5 @@
 # TP3
 
-export PROJECT_ID=gpc-tp3
-export REGION=europe-southwest1-a
-export BUCKET=$PROJECT_ID-bucket-cs
-export BUCKET2=$PROJECT_ID-bucket-2
-export PERSO_ROLE=cloudDeployBaguette
-
 ### Exercice 1 :
 
 #### 1.
