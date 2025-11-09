@@ -137,3 +137,55 @@ gcloud compute backend-services add-backend $EXTERNAL_BACKEND_NAME \
   --port-name https \
   --custom-request-headers 'Host: '$AZURE_API_HOST
 ````
+Revirement de situation. 
+On a continué sur GCloud. 
+
+Voici les commandes de fin du TP sur GCloud. 
+
+Création d'une IP publique pour l'API : 
+````
+gcloud compute addresses create lb-ip-address --global 
+Created [https://www.googleapis.com/compute/v1/projects/tp2-de-la-baguette/global/addresses/lb-ip-address].
+$ gcloud compute addresses describe lb-ip-address --global --format="value(address)"
+34.160.84.32
+````
+
+On crée le backend bucket, son api, et son service : 
+````
+gcloud compute backend-buckets create backend-bucket-baguette --gcs-bucket-name=le-site-statique-baguette --enable-cdn 
+Created [https://www.googleapis.com/compute/v1/projects/tp2-de-la-baguette/global/backendBuckets/backend-bucket-baguette].
+NAME: backend-bucket-baguette
+GCS_BUCKET_NAME: le-site-statique-baguette
+ENABLE_CDN: True
+$ 
+$ gcloud compute network-endpoint-groups create api-neg --region=europe-west1 --network-endpoint-type=serverless --cloud-run-service=flask-api
+Created [https://www.googleapis.com/compute/v1/projects/tp2-de-la-baguette/regions/europe-west1/networkEndpointGroups/api-neg].
+Created network endpoint group [api-neg].
+$ gcloud compute backend-services create apiWARNING: The following filter keys were not present in any resource : region
+$ 
+$ 
+$ gcloud compute backend-services create api-backend --global 
+Created [https://www.googleapis.com/compute/v1/projects/tp2-de-la-baguette/global/backendServices/api-backend].
+````
+
+On crée puis map l'url nécessaire : 
+````
+$ gcloud compute url-maps create my-url-baguette --default-backend-bucket=backend-bucket-baguette
+Created [https://www.googleapis.com/compute/v1/projects/tp2-de-la-baguette/global/urlMaps/my-url-baguette].
+NAME: my-url-baguette
+DEFAULT_SERVICE: backendBuckets/backend-bucket-baguette
+$ gcloud compute url-maps add-path-matcher my-url-baguette --path-matcher-name=api-matcher --default-backend-bucket=backend-bucket-baguette --backend-service-path-rules="/api/*=api-backend"
+Updated [https://www.googleapis.com/compute/v1/projects/tp2-de-la-baguette/global/urlMaps/my-url-baguette].
+````
+
+Création du proxy : 
+````
+gcloud compute target-http-proxies create my-baguette-proxy --url-map=my-url-baguette
+````
+
+
+Création de la forwarding rule : 
+```
+$ gcloud compute forwarding-rules create forwarding-rule-1 --address=lb-ip-address --global --target-http-proxy=my-baguette-proxy --ports=80
+Created [https://www.googleapis.com/compute/v1/projects/tp2-de-la-baguette/global/forwardingRules/forwarding-rule-1].
+```
