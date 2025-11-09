@@ -1,0 +1,45 @@
+swagger: "2.0"
+info:
+  title: Kenobi API
+  description: Une simple API Flask qui répond "hello there".
+  version: 1.0.0
+
+# Le serveur est défini via x-google-backend (Cloud Run, GCE, etc.)
+# Pas besoin de 'servers:' comme en OpenAPI 3
+paths:
+  /kenobi:
+    get:
+      summary: Renvoie un message "hello there"
+      description: Cette route renvoie un simple message JSON.
+      operationId: getKenobi
+      produces:
+        - application/json
+      responses:
+        200:
+          description: Message de salutation
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+                example: hello there
+        500:
+          description: Erreur interne du serveur
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: internal server error
+
+# Important pour GCP : indiquer le backend cible
+x-google-backend:
+  address: https://flask-api-esbkgoniqq-ew.a.run.app
+  protocol: h2
+  path_translation: APPEND_PATH_TO_ADDRESS
+
+# Configuration de CORS si besoin
+x-google-allow:
+  origins: ["*"]
+  methods: ["GET", "OPTIONS"]
+  headers: ["Content-Type", "Authorization"]

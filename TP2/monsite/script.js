@@ -3,14 +3,10 @@ document.getElementById("callApiBtn").addEventListener("click", async () => {
   responseDiv.textContent = "Appel baguette...";
 
   try {
-    // 🔧 Remplace l’URL ci-dessous par ton propre endpoint APIM :
-    const apiUrl = "https://apim-student-demo.azure-api.net/echo/get";
+    const apiUrl = "https://flask.bravemushroom-59142c25.francecentral.azurecontainerapps.io/kenobi";
 
     const res = await fetch(apiUrl, {
-      method: "GET",
-      headers: {
-        "Ocp-Apim-Subscription-Key": "TA_CLE_API_ICI" // si ton APIM l’exige
-      }
+      method: "GET"
     });
 
     if (!res.ok) {

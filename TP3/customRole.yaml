@@ -1,0 +1,8 @@
+title: "CloudDeployBaguette"
+description: "Déploiement de la baguette"
+stage: "GA" 
+includedPermissions: 
+- run.services.create
+- run.services.get
+- run.services.list
+- run.services.delete

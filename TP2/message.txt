@@ -1,0 +1,196 @@
+# ============================================
+# ÉTAPE 1 : API REST Serverless
+# ============================================
+
+export PROJECT_ID=tp2-de-la-baguette
+export API_REPO=flask-api-repo
+export LOCATION=europe-west1
+export API=flask-api
+export API_GATEWAY=flask-api
+export BUCKET_NAME=le-site-statique-baguette
+export NEG_API=api-neg
+export BILLING_ACCOUNT=01D8F4-2284D1-881AC0
+
+# Authentification et configuration
+gcloud auth login
+gcloud config set project tp2cloud-477309
+
+# Activer les services nécessaires
+gcloud services enable run.googleapis.com
+gcloud services enable artifactregistry.googleapis.com
+
+# Créer le registre d'artefacts
+gcloud artifacts repositories create flask-api-repo \
+  --repository-format=docker \
+  --location=europe-west1 \
+  --description="Repository for Flask API"
+
+# Configurer Docker pour le registre
+gcloud auth configure-docker europe-west1-docker.pkg.dev
+
+# Build et push de l'image (depuis le dossier contenant le Dockerfile)
+docker build -t flask-api .
+docker tag flask-api europe-west1-docker.pkg.dev/tp2cloud-477309/flask-api-repo/flask-api:v1
+docker push europe-west1-docker.pkg.dev/tp2cloud-477309/flask-api-repo/flask-api:v1
+
+# Déployer sur Cloud Run
+gcloud run deploy flask-api \
+  --image europe-west1-docker.pkg.dev/tp2cloud-477309/flask-api-repo/flask-api:v1 \
+  --platform managed \
+  --region europe-west1 \
+  --allow-unauthenticated \
+  --port 8080
+
+# Récupérer l'URL du service
+gcloud run services describe flask-api \
+  --platform=managed \
+  --region=europe-west1 \
+  --format="value(status.url)"
+
+# ============================================
+# ÉTAPE 2 : API Gateway
+# ============================================
+
+# Activer les services nécessaires
+gcloud services enable apigateway.googleapis.com
+gcloud services enable servicemanagement.googleapis.com
+gcloud services enable servicecontrol.googleapis.com
+
+# Créer l'API
+gcloud api-gateway apis create flask-api \
+  --project=tp2cloud-477309
+
+# Créer la configuration (assure-toi que le chemin vers openapi.yaml est correct)
+gcloud api-gateway api-configs create flask-api-config \
+  --api=flask-api \
+  --openapi-spec=openapi.yaml \
+  --project=tp2cloud-477309 \
+  --backend-auth-service-account=391078638011-compute@developer.gserviceaccount.com
+
+# Créer la gateway
+gcloud api-gateway gateways create flask-api-gateway \
+  --api=flask-api \
+  --api-config=flask-api-config \
+  --location=europe-west1 \
+  --project=tp2cloud-477309
+
+# Récupérer l'URL de la gateway
+gcloud api-gateway gateways describe flask-api-gateway \
+  --location=europe-west1 \
+  --format="value(defaultHostname)"
+
+# ============================================
+# ÉTAPE 3 : Site statique sur Cloud Storage
+# ============================================
+
+# Créer le bucket (nom doit être unique globalement)
+gsutil mb -l europe-west1 gs://mon-site-statique-unique-12345
+
+# Configurer pour l'hébergement web statique
+gsutil web set -m index.html -e 404.html gs://mon-site-statique-unique-12345
+
+# Rendre le bucket public
+gsutil iam ch allUsers:objectViewer gs://mon-site-statique-unique-12345
+
+# Uploader les fichiers
+gsutil cp index.html gs://mon-site-statique-unique-12345/
+gsutil cp style.css gs://mon-site-statique-unique-12345/
+gsutil cp script.js gs://mon-site-statique-unique-12345/
+
+# ============================================
+# ÉTAPE 4 : CDN + Load Balancer + HTTPS
+# ============================================
+
+# Réserver une IP globale
+gcloud compute addresses create lb-ip-address --global
+
+# Voir l'IP réservée
+gcloud compute addresses describe lb-ip-address \
+  --global \
+  --format="value(address)"
+
+# Créer le backend bucket avec CDN activé
+gcloud compute backend-buckets create mon-backend-bucket \
+  --gcs-bucket-name=mon-site-statique-unique-12345 \
+  --enable-cdn
+
+# Créer le Network Endpoint Group pour Cloud Run
+gcloud compute network-endpoint-groups create api-neg \
+  --region=europe-west1 \
+  --network-endpoint-type=serverless \
+  --cloud-run-service=flask-api
+
+# Créer le backend service pour l'API
+gcloud compute backend-services create api-backend \
+  --global
+
+# Ajouter le NEG au backend service
+gcloud compute backend-services add-backend api-backend \
+  --global \
+  --network-endpoint-group=api-neg \
+  --network-endpoint-group-region=europe-west1
+
+# Créer l'URL map avec routage
+gcloud compute url-maps create mon-url-map \
+  --default-backend-bucket=mon-backend-bucket
+
+# Ajouter le path matcher pour l'API
+gcloud compute url-maps add-path-matcher mon-url-map \
+  --path-matcher-name=api-matcher \
+  --default-backend-bucket=mon-backend-bucket \
+  --backend-service-path-rules="/api/*=api-backend"
+
+# ============================================
+# OPTION A : SANS DOMAINE PERSONNALISÉ (HTTP)
+# ============================================
+
+# Créer le proxy HTTP (pas HTTPS)
+gcloud compute target-http-proxies create mon-http-proxy \
+  --url-map=mon-url-map
+
+# Créer la forwarding rule
+gcloud compute forwarding-rules create mon-forwarding-rule \
+  --address=lb-ip-address \
+  --global \
+  --target-http-proxy=mon-http-proxy \
+  --ports=80
+
+# Tester avec : http://[VOTRE_IP]/
+# Tester l'API avec : http://[VOTRE_IP]/api/hello
+
+# ============================================
+# OPTION B : AVEC DOMAINE NIP.IO (HTTPS)
+# ============================================
+
+# Récupérer votre IP (exemple: 35.244.132.235)
+IP=$(gcloud compute addresses describe lb-ip-address --global --format="value(address)")
+echo "Votre IP: $IP"
+
+# Votre domaine sera: $IP.nip.io (exemple: 35.244.132.235.nip.io)
+DOMAIN="$IP.nip.io"
+echo "Votre domaine: $DOMAIN"
+
+# Créer le certificat SSL managé
+gcloud compute ssl-certificates create mon-certificat-nip \
+  --domains=$DOMAIN \
+  --global
+
+# Créer le proxy HTTPS
+gcloud compute target-https-proxies create mon-https-proxy \
+  --url-map=mon-url-map \
+  --ssl-certificates=mon-certificat-nip
+
+# Créer la forwarding rule HTTPS
+gcloud compute forwarding-rules create mon-forwarding-rule-https \
+  --address=lb-ip-address \
+  --global \
+  --target-https-proxy=mon-https-proxy \
+  --ports=443
+
+# IMPORTANT : Attendre 10-15 minutes que le certificat soit provisionné
+gcloud compute ssl-certificates describe mon-certificat-nip \
+  --global \
+  --format="value(managed.status)"
+
+# Tester avec : https://35.244.132.235.nip.io/
+# Tester l'API avec : https://35.244.132.235.nip.io/api/hello
