@@ -366,7 +366,7 @@ Updated IAM policy for project [gpc-tp3].
 bindings:
 - members:
   - user:collaborateur0013@gmail.com
-  role: projects/gpc-tp3/roles/customCloudRunDeployer
+  role: projects/gpc-tp3/roles/CloudDeployBaguette
 - members:
   - serviceAccount:service-402564488059@gcp-sa-artifactregistry.iam.gserviceaccount.com
   role: roles/artifactregistry.serviceAgent
@@ -413,7 +413,7 @@ Updated IAM policy for project [gpc-tp3].
 bindings:
 - members:
   - user:collaborateur0013@gmail.com
-  role: projects/gpc-tp3/roles/customCloudRunDeployer
+  role: projects/gpc-tp3/roles/CloudDeployBaguette
 - members:
   - serviceAccount:service-402564488059@gcp-sa-artifactregistry.iam.gserviceaccount.com
   role: roles/artifactregistry.serviceAgent
@@ -536,7 +536,7 @@ Updated IAM policy for project [gpc-tp3].
 bindings:
 - members:
   - user:collaborateur0013@gmail.com
-  role: projects/gpc-tp3/roles/customCloudRunDeployer
+  role: projects/gpc-tp3/roles/CloudDeployBaguette
 - members:
   - serviceAccount:service-402564488059@gcp-sa-artifactregistry.iam.gserviceaccount.com
   role: roles/artifactregistry.serviceAgent
@@ -811,7 +811,7 @@ ERROR: (gcloud.logging.read) PERMISSION_DENIED: Permission denied for all log vi
 Pour finir  : 
 ````
 mederic.marquie@ynov.com - roles/owner
-collaborateur0013@gmail.com - roles/editor + customCloudRunDeployer + roles/run.admin (temporaire)
+collaborateur0013@gmail.com - roles/editor + CloudDeployBaguette + roles/run.admin (temporaire)
 marquie.mederic1@gmail.com - roles/viewer
 
 app-backend@gpc-tp3.iam.gserviceaccount.com
@@ -821,5 +821,5 @@ deploy-automation@gpc-tp3.iam.gserviceaccount.com
 Bucket Storage : gs://gpc-tp3-bucket-cs/
 Service Cloud Run : run-backend
 Service Cloud Run : run-cloud
-Rôle personnalisé : customCloudRunDeployer
+Rôle personnalisé : CloudDeployBaguette
 ````
