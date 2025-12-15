@@ -7,4 +7,4 @@ Avoir recours à kubernetes
 On veut de l'IAM terraform
 Un Piepline
 Sur GIT
-Un rendu READMES
+Un rendu README
